@@ -21,6 +21,22 @@ def read_rows(name_of_file):
     except :
         quit_program("le fichier n'existe pas")
 
+def is_valid_board(board):
+    if len(board) != 9:
+        return False
+
+    for row in board:
+        cleaned_row = [element for element in row if element != "\n"]
+
+        if len(cleaned_row) != 9:
+            return False
+        for element in cleaned_row:
+            str_element = str(element)
+            if not str_element.isdigit() or '\n' in str_element:
+                return False
+
+    return True        
+
 def display_board(board):
     for i in range(9):
         if i % 3 == 0 and i != 0:
@@ -76,7 +92,9 @@ def main():
     handle_error(sys.argv)
     try:
         board = read_rows(sys.argv[1])
-        print("grille de départ")
+        if not is_valid_board(board):
+            quit_program("grille de départ non valide")
+        print("grille de départ OK")
         display_board(board)
         print(11*"=")
         result = solve(board)
