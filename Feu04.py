@@ -7,10 +7,6 @@
 # La première ligne du fichier contient les informations pour lire la carte : 
 #   nombre de lignes du plateau, caractères pour “vide”, “obstacle” et “plein”.
 
-#TO DO
-#check la première ligne du plateau et intégrer les différents caractères
-#les caractères présents dans la carte sont uniquement ceux de la première ligne 
-
 import sys
 
 def handle_error(user_value): 
@@ -21,34 +17,34 @@ def quit_program(message):
     sys.exit(message)
 
 def read_board(name_of_file):
-    board_coordinates = []
+    board = []
     try:
         with open(name_of_file, 'r') as f:
             for line  in f:
-                line_array = [ x for x in line if x != "\n"]
-                board_coordinates.append(line_array)
-        return board_coordinates
+                line_array = list(line.rstrip())
+                board.append(line_array)
+            first_line = board.pop(0)
+        return board, first_line
     except :
         quit_program("le fichier n'existe pas")
 
-def check_board(board):
+def check_board(board,first_line):
     for line in board:
-        lg=len(line)
-        if len(line) != lg or len(board) == 0:
+        for char in line:
+            if char not in first_line[1:-1]:
+                quit_program("au moins un caractère n'est pas valide")
+        
+    expected_lenght=len(board[0])
+    for line in board:
+        if len(line) != expected_lenght or len(board) == 0:
             quit_program("le plateau n'est pas valide")
     return
 
 def tallest_square(board):
     return max(len(board), len(board[0]))
 
-def create_square(lg):
-    square=[]
-    for i in range(lg):
-        square_line=[]
-        for j in range(lg):
-            square_line.append(".")
-        square.append(square_line)
-    return square
+def create_square(size, empty_car): 
+    return [[empty_car] * size for _ in range(size)]
 
 # Vérifie si le carré est présent dans le plateau à la position (x, y)
 def check_pattern(board,square, x, y):
@@ -71,8 +67,6 @@ def find_pattern_position(board, square):
 def check_pattern_in_board(board,square):
     x, y = find_pattern_position(board, square)
     if x is not None and y is not None:
-        # print ("Trouvé", end = "\n")
-        # print (f'coordonnées : ({x}, {y})')
         return True , x , y
     else:
         return False
@@ -83,12 +77,11 @@ def replace_car_in_square(square, full_car):
             line[i] = full_car
     return square
 
-
 # Construit une représentation du plateau avec le motif trouvé à la position (x, y)
-def display_pattern_in_board(board,square,x,y):
+def display_pattern_in_board(board,square,x,y,full_car):
 
     if x is not None and y is not None:
-        new_square = replace_car_in_square(square, "o")
+        new_square = replace_car_in_square(square,full_car)
         display = []
         for yb, row in enumerate(board):
             line = []
@@ -121,16 +114,19 @@ def display_pattern_in_board(board,square,x,y):
 def main():
     handle_error(sys.argv)
     name_of_file_board = sys.argv[1]
-    board_list = read_board(name_of_file_board)
-    check_board(board_list)
+    board_list , first_line = read_board(name_of_file_board)
+    empty_car = first_line[1]
+    full_car = first_line[-1]
+
+    check_board(board_list, first_line)
     side_square = tallest_square(board_list)
     i=0
     for i in range(side_square-i):
-        actual_square = create_square(side_square-i)
+        actual_square = create_square(side_square-i,empty_car)
         find_pattern_position(board_list,actual_square)
         if check_pattern_in_board(board_list,actual_square):
             _,x,y= check_pattern_in_board(board_list,actual_square)
-            result = display_pattern_in_board(board_list,actual_square,x,y)
+            result = display_pattern_in_board(board_list,actual_square,x,y,full_car)
             print(result)
             break
    
