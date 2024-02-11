@@ -40,9 +40,6 @@ def check_board(board,first_line):
             quit_program("le plateau n'est pas valide")
     return
 
-def tallest_square(board):
-    return max(len(board), len(board[0]))
-
 def create_square(size, empty_car): 
     return [[empty_car] * size for _ in range(size)]
 
@@ -79,36 +76,28 @@ def replace_car_in_square(square, full_car):
 
 # Construit une représentation du plateau avec le motif trouvé à la position (x, y)
 def display_pattern_in_board(board,square,x,y,full_car):
-
-    if x is not None and y is not None:
-        new_square = replace_car_in_square(square,full_car)
-        display = []
-        for yb, row in enumerate(board):
-            line = []
-            for xb, _ in enumerate(row):
-                # Vérifie si la position (x, y) se trouve dans la zone où le motif doit être affiché
-                x_pattern =  x <= xb < x + max(len(row) for row in new_square)
-                y_pattern =  y <= yb < y + len(new_square) 
-
-                # Calcule les coordonnées relatives du motif par rapport au coin supérieur gauche du square
-                if x_pattern and y_pattern :
-                    yp = yb - y
-                    xp = xb - x
-
-                    # Vérifie si la position se trouve dans les limites du motif et récupère le caractère correspondant
-                    if yp < len(new_square) and xp < len(new_square[yp]) :
-                        line.append(new_square[yp][xp])
-                    else:
-                        line.append(board[yb][xb])
-                else:
-                    line.append(board[yb][xb])
-
-            line = "".join(line)
-            display.append(line)
-        display = "\n".join(display)
-        return display
-    else:
+    if x is None and y is None:
         return "carré non trouvé"
+    
+    new_square = replace_car_in_square(square,full_car)
+    display = []
+    for yb, row in enumerate(board):
+        line = []
+        for xb, char in enumerate(row):
+            # Vérifie si la position (x, y) se trouve dans la zone où le motif doit être affiché
+            x_pattern_exist =  x <= xb < x + max(len(row) for row in new_square)
+            y_pattern_exist =  y <= yb < y + len(new_square) 
+
+            # Calcule les coordonnées relatives du motif par rapport au coin supérieur gauche du square
+            if x_pattern_exist and y_pattern_exist :
+                yp = yb - y
+                xp = xb - x
+                line.append(new_square[yp][xp])
+            else:
+                line.append(char)
+
+        display.append("".join(line))
+    return "\n".join(display)
 
 
 def main():
@@ -119,16 +108,18 @@ def main():
     full_car = first_line[-1]
 
     check_board(board_list, first_line)
-    side_square = tallest_square(board_list)
-    i=0
-    for i in range(side_square-i):
-        actual_square = create_square(side_square-i,empty_car)
-        find_pattern_position(board_list,actual_square)
+    side_square = min(len(board_list), len(board_list[0]))
+    
+    actual_square = None
+    for i in range(side_square,0,-1):
+        actual_square = create_square(i,empty_car)
         if check_pattern_in_board(board_list,actual_square):
-            _,x,y= check_pattern_in_board(board_list,actual_square)
-            result = display_pattern_in_board(board_list,actual_square,x,y,full_car)
-            print(result)
             break
+        
+    if actual_square:
+        _,x,y = check_pattern_in_board(board_list,actual_square)
+        result = display_pattern_in_board(board_list,actual_square,x,y,full_car)
+        print(result)
    
 if __name__ == "__main__":
     main()
