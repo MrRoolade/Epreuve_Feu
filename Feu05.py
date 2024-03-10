@@ -8,13 +8,10 @@
 
 # Le but du programme est de remplacer les caractères “vide” par des caractères “chemin” pour représenter le plus court chemin pour traverser le labyrinthe.
 #  Un déplacement ne peut se faire que vers le haut, le bas, la droite ou la gauche.
-# 
-# Algorithme de Lee
 
-# TO DO : verifier 
-# fonction de lecture de posibilité autour d'une case
-# choisir un chemin
-# fonction ou condition de fin de la récursivité 
+# TO DO :
+# trouver LE chemin le plsu court
+# afficher le labyrinthe avec le chemin le plus court
 
 
 import sys
@@ -56,42 +53,43 @@ def check_board(board,first_line):
 
     return expected_size
 
-def find_car_in_maze(board, car):
+def find_car_in_maze(board, given_car):
     for y,line in enumerate(board):
         for x, car in enumerate(line):
-            if car == car:
-                return x, y    
+            if car == given_car:
+                return (x, y)
     return None
 
 def create_ref_maze(size):
-    return [[False] * size[0] for _ in range(size[1])]
+    return [[0] * size[0] for _ in range(size[1])]
 
-def is_valid(board, visited, x, y, empty_car):
-    return board[x][y] == empty_car and visited[x][y]!= 1
+def is_valid(board, visited, x, y, empty_car, entry_car, exit_car, path_car):
+    if board[x][y] == empty_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
+        return True
+    if board[x][y] == entry_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
+        return True
+    if board[x][y] == exit_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
+        return True
+    if board[x][y] == path_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
+        return True
+    return False
     
-
-def find_shortest_path(board, visited, end, i, j, empty_car, min_dist=sys.maxsize, dist=0):
+def find_shortest_path(board, visited, end, i, j, empty_car,entry_car, exit_car,path_car, min_dist, dist):
+    print(f'exploring : {i}, {j}')
+    print(end)
     #condition d'arret
-    if (i ,j) == end:
+    if (i, j) == end:
+        print("we arrived")
         return min(min_dist, dist)
     
     visited[i][j] = 1
 
-    # cellule du Bas
-    if is_valid(board, visited, i+1, j, empty_car):
-        min_dist = find_shortest_path(board, visited, end, i+1, j, empty_car, min_dist, dist + 1)
-    
-    # cellule du Haut
-    if is_valid(board, visited, i-1, j, empty_car):
-        min_dist = find_shortest_path(board, visited, end, i-1, j, empty_car, min_dist, dist + 1)
-    
-    # cellule de droite
-    if is_valid(board, visited, i, j+1, empty_car):
-        min_dist = find_shortest_path(board, visited, end, i, j+1, empty_car, min_dist, dist + 1)
-    
-    # cellule de gauche
-    if is_valid(board, visited, i, j-1, empty_car):
-        min_dist = find_shortest_path(board, visited, end, i, j-1, empty_car, min_dist, dist + 1)
+    directions = [(0,1),(1,0),(0,-1),(-1,0)]
+    for dx , dy in directions:
+        new_i, new_j = i + dx, j + dy 
+        if is_valid(board, visited, new_i, new_j, empty_car, entry_car, exit_car,path_car):
+            print("moving to", new_i, new_j)
+            min_dist = find_shortest_path(board, visited, end, new_i, new_j, empty_car,path_car, min_dist, dist + 1)
 
     #backtrack
     visited[i][j] = 0
@@ -108,23 +106,22 @@ def main():
     entry_car = first_line[-2]
     exit_car = first_line[-1]
 
-    
+    print(empty_car, entry_car, exit_car, full_car, path_car)
     size = check_board(board_list, first_line)   
     visited = create_ref_maze(size)
     
-    startx,starty = find_car_in_maze(board_list,entry_car) 
+    start = find_car_in_maze(board_list,entry_car) 
    
-    endx,endy = find_car_in_maze(board_list,exit_car) 
-    end = (endx, endy)
+    end = find_car_in_maze(board_list,exit_car)
+    # print(end)
+    dist = 0
+    min_dist= int()
 
-    min_dist = find_shortest_path(board_list, visited, end, startx, starty, empty_car)
-    print(min_dist)
-    print("ok")
+    min_dist = find_shortest_path(board_list, visited, end, start[0],start[1], empty_car,entry_car, exit_car,path_car, min_dist, dist)
+    print(min_dist, 'ok')
 
     for line in board_list:
         print("".join(line))
-    # for line in visited:
-    #     print("".join(str(line)))
 
 if __name__ == "__main__":
     main()
