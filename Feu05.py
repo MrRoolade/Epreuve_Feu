@@ -16,6 +16,16 @@
 
 import sys
 
+class MazeInfo:
+    def __init__(self, full_car, empty_car, path_car, entry_car, exit_car):
+        self.full_car = full_car
+        self.empty_car = empty_car
+        self.path_car = path_car
+        self.entry_car = entry_car
+        self.exit_car = exit_car
+
+
+
 def handle_error(user_value): 
     if len(user_value)!=2: 
         quit_program("veuillez rentrer un nom de fichier svp")
@@ -63,36 +73,35 @@ def find_car_in_maze(board, given_car):
 def create_ref_maze(size):
     return [[0] * size[0] for _ in range(size[1])]
 
-def is_valid(board, visited, x, y, empty_car, entry_car, exit_car, path_car):
-    if board[x][y] == empty_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
-        return True
-    if board[x][y] == entry_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
-        return True
-    if board[x][y] == exit_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
-        return True
-    if board[x][y] == path_car and visited[x][y] ==0 and 0<x<len(board[x]) and 0<y<len(board):
-        return True
-    return False
+def is_valid(board, visited, x, y, valid_car):
+#    print(x, y, board[y][x])
+#    print(valid_car)
+
+   return board[y][x] in valid_car and visited[y][x] ==0 and 0<=y<len(board[x]) and 0<=x<len(board)
+        
     
-def find_shortest_path(board, visited, end, i, j, empty_car,entry_car, exit_car,path_car, min_dist, dist):
+def find_shortest_path(board, visited, end, i, j, maze_info, min_dist, dist):
     print(f'exploring : {i}, {j}')
-    print(end)
+    print(end, i,j)
     #condition d'arret
-    if (i, j) == end:
+    if i == end[1] and j == end[0]:
         print("we arrived")
         return min(min_dist, dist)
     
-    visited[i][j] = 1
+    visited[j][i] = 1
 
     directions = [(0,1),(1,0),(0,-1),(-1,0)]
-    for dx , dy in directions:
+    for dx, dy in directions:
         new_i, new_j = i + dx, j + dy 
-        if is_valid(board, visited, new_i, new_j, empty_car, entry_car, exit_car,path_car):
+        # print(new_i, new_j)
+        if is_valid(board, visited, new_i, new_j, [maze_info.empty_car, maze_info.entry_car, maze_info.exit_car, maze_info.path_car]):
             print("moving to", new_i, new_j)
-            min_dist = find_shortest_path(board, visited, end, new_i, new_j, empty_car,path_car, min_dist, dist + 1)
+            min_dist = find_shortest_path(board, visited, end, new_i, new_j, maze_info, min_dist, dist + 1)
+        # verif = is_valid(board, visited, new_i, new_j, [maze_info.empty_car, maze_info.entry_car, maze_info.exit_car, maze_info.path_car])
+        print(f' pascool')
 
     #backtrack
-    visited[i][j] = 0
+    visited[j][i] = 0
 
     return min_dist
 
@@ -100,24 +109,21 @@ def main():
     handle_error(sys.argv)
     name_of_file_board = sys.argv[1]
     board_list , first_line = read_board(name_of_file_board)
-    full_car = first_line[-5]
-    empty_car = first_line[-4]
-    path_car = first_line[-3]
-    entry_car = first_line[-2]
-    exit_car = first_line[-1]
 
-    print(empty_car, entry_car, exit_car, full_car, path_car)
+    maze_info = MazeInfo(first_line[-5], first_line[-4], first_line[-3],first_line[-2], first_line[-1])
+    print(maze_info.__dict__)
+
     size = check_board(board_list, first_line)   
     visited = create_ref_maze(size)
     
-    start = find_car_in_maze(board_list,entry_car) 
+    start = find_car_in_maze(board_list,maze_info.entry_car) 
    
-    end = find_car_in_maze(board_list,exit_car)
+    end = find_car_in_maze(board_list,maze_info.exit_car)
     # print(end)
     dist = 0
     min_dist= int()
 
-    min_dist = find_shortest_path(board_list, visited, end, start[0],start[1], empty_car,entry_car, exit_car,path_car, min_dist, dist)
+    min_dist = find_shortest_path(board_list, visited, end, start[0],start[1], maze_info, min_dist, dist)
     print(min_dist, 'ok')
 
     for line in board_list:
