@@ -15,6 +15,7 @@
 
 
 import sys
+from collections import deque
 
 class MazeInfo:
     def __init__(self, full_car, empty_car, path_car, entry_car, exit_car):
@@ -74,36 +75,69 @@ def create_ref_maze(size):
     return [[0] * size[0] for _ in range(size[1])]
 
 def is_valid(board, visited, x, y, valid_car):
-#    print(x, y, board[y][x])
-#    print(valid_car)
-
-   return board[y][x] in valid_car and visited[y][x] ==0 and 0<=y<len(board[x]) and 0<=x<len(board)
+   if x < 0 or y < 0 or y >= len(board) or x>= len(board[y]):
+       return False
+   return board[y][x] in valid_car and visited[y][x] == 0
         
-    
+
 def find_shortest_path(board, visited, end, i, j, maze_info, min_dist, dist):
-    print(f'exploring : {i}, {j}')
-    print(end, i,j)
-    #condition d'arret
+    visited = set()
+    queue = deque([(i, j)])
     if i == end[1] and j == end[0]:
         print("we arrived")
+        for line in visited:
+            print(line)
         return min(min_dist, dist)
     
     visited[j][i] = 1
+    
 
     directions = [(0,1),(1,0),(0,-1),(-1,0)]
     for dx, dy in directions:
         new_i, new_j = i + dx, j + dy 
-        # print(new_i, new_j)
         if is_valid(board, visited, new_i, new_j, [maze_info.empty_car, maze_info.entry_car, maze_info.exit_car, maze_info.path_car]):
-            print("moving to", new_i, new_j)
+            print(f'Moving to: ({new_i}, {new_j})')
+            board[j][i] = maze_info.path_car
+            for line in visited:
+                print(line) 
             min_dist = find_shortest_path(board, visited, end, new_i, new_j, maze_info, min_dist, dist + 1)
-        # verif = is_valid(board, visited, new_i, new_j, [maze_info.empty_car, maze_info.entry_car, maze_info.exit_car, maze_info.path_car])
-        print(f' pascool')
 
     #backtrack
     visited[j][i] = 0
+    board[j][i] = maze_info.empty_car
+    # print('demi tour')
 
     return min_dist
+    
+# def find_shortest_path(board, visited, end, i, j, maze_info, min_dist, dist):
+#     print(f'exploring : {i}, {j}')
+#     # print(end, i,j)
+#     #condition d'arret
+#     if i == end[1] and j == end[0]:
+#         print("we arrived")
+#         for line in visited:
+#             print(line)
+#         return min(min_dist, dist)
+    
+#     visited[j][i] = 1
+    
+
+#     directions = [(0,1),(1,0),(0,-1),(-1,0)]
+#     for dx, dy in directions:
+#         new_i, new_j = i + dx, j + dy 
+#         if is_valid(board, visited, new_i, new_j, [maze_info.empty_car, maze_info.entry_car, maze_info.exit_car, maze_info.path_car]):
+#             print(f'Moving to: ({new_i}, {new_j})')
+#             board[j][i] = maze_info.path_car
+#             for line in visited:
+#                 print(line) 
+#             min_dist = find_shortest_path(board, visited, end, new_i, new_j, maze_info, min_dist, dist + 1)
+
+#     #backtrack
+#     visited[j][i] = 0
+#     board[j][i] = maze_info.empty_car
+#     # print('demi tour')
+
+#     return min_dist
 
 def main():
     handle_error(sys.argv)
@@ -111,7 +145,6 @@ def main():
     board_list , first_line = read_board(name_of_file_board)
 
     maze_info = MazeInfo(first_line[-5], first_line[-4], first_line[-3],first_line[-2], first_line[-1])
-    print(maze_info.__dict__)
 
     size = check_board(board_list, first_line)   
     visited = create_ref_maze(size)
@@ -119,15 +152,21 @@ def main():
     start = find_car_in_maze(board_list,maze_info.entry_car) 
    
     end = find_car_in_maze(board_list,maze_info.exit_car)
-    # print(end)
+    print(end)
     dist = 0
-    min_dist= int()
+    min_dist= float('inf')
 
     min_dist = find_shortest_path(board_list, visited, end, start[0],start[1], maze_info, min_dist, dist)
-    print(min_dist, 'ok')
+    if min_dist == float('inf'):
+        print('nous nous sommes perdu dans le labyrinthe')
+    else:
+        print(f'le chemin le plus est à {min_dist} case(s) du depart')
 
     for line in board_list:
         print("".join(line))
+
+    # for line in board_final:
+    #     print("".join(line))
 
 if __name__ == "__main__":
     main()
