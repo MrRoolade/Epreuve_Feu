@@ -20,10 +20,12 @@ else:
                 print(chars[3], end="") # ENTREE
             elif y == height - 1 and x == first_exit:
                 print(chars[4], end="") # SORTIE n°1
-            elif y == second_exit and x == height - 1 :
+            elif y == second_exit and x == width - 1 :
                 print(chars[4], end="") # SORTIE n°2
             elif 1 <= y <= height - 2 and 1 <= x <= width - 2 and random.randint(0, 99) > 20:
                 print(chars[1], end="") # VIDE
             else:
                 print(chars[0], end="") # PLEIN
         print()
+
+#exemple = labyrinthe_generator.py 10 10 "#.o12"
