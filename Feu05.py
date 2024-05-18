@@ -9,10 +9,6 @@
 # Le but du programme est de remplacer les caractères “vide” par des caractères “chemin” pour représenter le plus court chemin pour traverser le labyrinthe.
 #  Un déplacement ne peut se faire que vers le haut, le bas, la droite ou la gauche.
 
-# TO DO :
-# afficher le labyrinthe avec le chemin le plus court
-
-
 import sys
 from collections import deque
 
@@ -46,8 +42,7 @@ def read_board(name_of_file):
 def check_board(board,first_line):
     valid_car = set(first_line[-5:])
     size="".join(first_line[:-5])
-    expected_size = tuple(map(int, size.split('x')))
-    expected_height, expected_lenght  = expected_size
+    expected_height, expected_lenght  = tuple(map(int, size.split('x')))
 
     for line in board:
         if len(line) != expected_lenght :
@@ -59,49 +54,38 @@ def check_board(board,first_line):
     if len(board) != expected_height:
         quit_program("la hauteur du plateau n'est pas valide")
 
-    return expected_size
+    return True
 
 def find_car_in_maze(board, given_car):
+    positions = []
     for y,line in enumerate(board):
         for x, car in enumerate(line):
             if car == given_car:
-                return (y, x)
+                positions.append((y, x))
+    return positions
+
+def bfs(board, start, exits, maze_info) :
+    queue = deque([(start[0],start[1], [])])
+    visited = set()
+    directions = [(0,-1),(0,1),(1,0),(-1,0)]
+
+    while queue:
+        y, x, path = queue.popleft()
+        if(y,x) in visited:
+            continue
+        visited.add((y,x))
+        path = path +[(y,x)]
+        
+        if(y,x) in exits :
+            return path
+
+        for dy, dx in directions:
+            ny, nx = y + dy, x + dx
+            if (0<= ny <len(board)) and (0<= nx <len(board[0])):
+                if board[ny][nx] in [maze_info.empty_car, maze_info.exit_car]:
+                    queue.append((ny, nx, path))
     return None
 
-def create_ref_maze(size):
-    return [[0] * size[1] for _ in range(size[0])]
-
-def is_valid(board, visited, x, y, valid_car):
-   if x < 0 or y < 0 or y >= len(board) or x>= len(board[y]):
-       return False
-   return board[y][x] in valid_car and visited[y][x] == 0
-        
-def find_shortest_path(board, visited, end, i, j, maze_info, min_dist, dist, path=None):
-    if path is None:
-        path = []
-    if j == end[0] and i == end[1]:
-        if dist < min_dist:
-            min_dist = dist
-            path.append((j,i)) 
-        return min_dist, path  # Sinon, retourner le chemin actuel sans l'ajouter
-
-    visited[j][i] = 1
-
-    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-    for dx, dy in directions:
-        new_i, new_j = i + dx, j + dy
-        if is_valid(board, visited, new_i, new_j, [maze_info.empty_car, maze_info.exit_car, maze_info.entry_car]):
-            new_min_dist, new_path = find_shortest_path(board, visited, end, new_i, new_j, maze_info, min_dist, dist + 1, path + [(j, i)])
-            if new_min_dist < min_dist:
-                min_dist = new_min_dist
-                path = new_path
-            elif new_min_dist == min_dist:  # Si la distance est égale, comparer la longueur du chemin
-                if len(new_path) < len(path):
-                    path = new_path
-
-    visited[j][i] = 0
-
-    return min_dist, path
 
 def display_solved_maze (board_list, path_solution, maze_info):
     for y, line in enumerate(board_list):
@@ -119,25 +103,17 @@ def main():
     handle_error(sys.argv)
     name_of_file_board = sys.argv[1]
     board_list , first_line = read_board(name_of_file_board)
-  
     maze_info = MazeInfo(first_line[-5], first_line[-4], first_line[-3],first_line[-2], first_line[-1])
+    start = find_car_in_maze(board_list,maze_info.entry_car)[0]
+    exits = find_car_in_maze(board_list,maze_info.exit_car)
 
-    size = check_board(board_list, first_line)   
-    visited = create_ref_maze(size)
-    
-    start = find_car_in_maze(board_list,maze_info.entry_car) 
-   
-    end = find_car_in_maze(board_list,maze_info.exit_car)
-    print(end)
-    dist = 0
-    min_dist= float('inf')
-
-    min_dist , path = find_shortest_path(board_list, visited, end, start[1],start[0], maze_info, min_dist, dist)
-    if min_dist == float('inf'):
-        print('nous nous sommes perdu dans le labyrinthe')
-    else:
-        print(f'le chemin le plus court est à {min_dist} case(s) du depart')
-        display_solved_maze(board_list, path, maze_info)
+    if check_board(board_list, first_line):
+        path = bfs(board_list, start, exits, maze_info)
+        if path is None:
+            print('Nous nous sommes perdus dans le labyrinthe')
+        else:
+            print(f'Le chemin le plus court est de {len(path) - 1} case(s) du départ')
+            display_solved_maze(board_list, path, maze_info)
 
 if __name__ == "__main__":
     main()
